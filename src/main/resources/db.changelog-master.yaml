@@ -1,0 +1,189 @@
+databaseChangeLog:
+  - changeSet:
+      id: 03042026-items-01
+      author: user
+      changes:
+        - createTable:
+            tableName: items
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: name
+                  type: varchar(255)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: price
+                  type: decimal(19, 2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamp
+
+  - changeSet:
+      id: 03042026-orders-01
+      author: user
+      changes:
+        - createTable:
+            tableName: orders
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: user_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+              - column:
+                  name: status
+                  type: varchar(50)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: total_price
+                  type: decimal(19, 2)
+                  constraints:
+                    nullable: false
+              - column:
+                  name: deleted
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamp
+
+  - changeSet:
+      id: 03042026-order_items-01
+      author: user
+      changes:
+        - createTable:
+            tableName: order_items
+            columns:
+              - column:
+                  name: id
+                  type: bigint
+                  autoIncrement: true
+                  constraints:
+                    primaryKey: true
+                    nullable: false
+              - column:
+                  name: order_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_order_items_order
+                    referencedTableName: orders
+                    referencedColumnNames: id
+              - column:
+                  name: item_id
+                  type: bigint
+                  constraints:
+                    nullable: false
+                    foreignKeyName: fk_order_items_item
+                    referencedTableName: items
+                    referencedColumnNames: id
+              - column:
+                  name: quantity
+                  type: int
+                  constraints:
+                    nullable: false
+              - column:
+                  name: created_at
+                  type: timestamp
+                  constraints:
+                    nullable: false
+              - column:
+                  name: updated_at
+                  type: timestamp
+
+  - changeSet:
+      id: 20240318-indexes-01
+      author: user
+      changes:
+        - createIndex:
+            indexName: idx_orders_user_id
+            tableName: orders
+            columns:
+              - column:
+                  name: user_id
+        - createIndex:
+            indexName: idx_order_items_order_id
+            tableName: order_items
+            columns:
+              - column:
+                  name: order_id
+        - createIndex:
+            indexName: idx_items_name
+            tableName: items
+            columns:
+              - column:
+                  name: name
+
+  - changeSet:
+      id: 03042026-items-seed
+      author: artur
+      changes:
+        - insert:
+            tableName: items
+            columns:
+              - column: { name: id, valueNumeric: 1 }
+              - column: { name: name, value: "item1" }
+              - column: { name: price, valueNumeric: 999.99 }
+              - column: { name: created_at, valueDate: "now()" }
+              - column: { name: updated_at, valueDate: "now()" }
+        - insert:
+            tableName: items
+            columns:
+              - column: { name: id, valueNumeric: 2 }
+              - column: { name: name, value: "item2" }
+              - column: { name: price, valueNumeric: 850.00 }
+              - column: { name: created_at, valueDate: "now()" }
+              - column: { name: updated_at, valueDate: "now()" }
+        - insert:
+            tableName: items
+            columns:
+              - column: { name: id, valueNumeric: 3 }
+              - column: { name: name, value: "item3" }
+              - column: { name: price, valueNumeric: 1200.50 }
+              - column: { name: created_at, valueDate: "now()" }
+              - column: { name: updated_at, valueDate: "now()" }
+        - insert:
+            tableName: items
+            columns:
+              - column: { name: id, valueNumeric: 4 }
+              - column: { name: name, value: "item4" }
+              - column: { name: price, valueNumeric: 350.00 }
+              - column: { name: created_at, valueDate: "now()" }
+              - column: { name: updated_at, valueDate: "now()" }
+        - insert:
+            tableName: items
+            columns:
+              - column: { name: id, valueNumeric: 5 }
+              - column: { name: name, value: "item7" }
+              - column: { name: price, valueNumeric: 799.00 }
+              - column: { name: created_at, valueDate: "now()" }
+              - column: { name: updated_at, valueDate: "now()" }
