@@ -70,7 +70,6 @@ public class OrderServiceImpl implements OrderService {
     @Override
     public OrderResponseDto getOrderById(Long id) {
         Order order = orderRepository.findById(id)
-                .filter(o -> !o.isDeleted())
                 .orElseThrow(() -> new ResourceNotFoundException("Order not found: " + id));
 
         return enrichWithUserInfo(orderMapper.toDto(order), order.getUserId());
@@ -98,18 +97,18 @@ public class OrderServiceImpl implements OrderService {
         if (!orderRepository.existsById(id)) {
             throw new ResourceNotFoundException("Order not found: " + id);
         }
-        orderRepository.softDelete(id);
+        orderRepository.deleteById(id);
     }
 
     @Override
     public List<OrderResponseDto> getOrdersByUserId(Long userId) {
-        return orderRepository.findAllByUserIdAndDeletedFalse(userId).stream()
+        return orderRepository.findAllByUserId(userId).stream()
                 .map(order -> enrichWithUserInfo(orderMapper.toDto(order), userId))
                 .toList();
     }
 
     private OrderResponseDto enrichWithUserInfo(OrderResponseDto dto, Long userId) {
-        dto.setUser(userIntegrationService.fetchUserById(userId));
+        dto.setUser(userIntegrationService.fetchUserByEmail(userId));
         return dto;
     }
 }

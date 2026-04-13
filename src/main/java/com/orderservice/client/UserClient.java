@@ -10,4 +10,7 @@ public interface UserClient {
 
     @GetMapping("/api/v1/users/{id}")
     UserResponseDto getUserById(@PathVariable Long id);
+
+    @GetMapping("/api/v1/users/email/{email}")
+    UserResponseDto getUserByEmail(@PathVariable String email);
 }

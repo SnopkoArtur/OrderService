@@ -1,8 +1,8 @@
-name: User Service CI/CD
+name: Order Service CI/CD
 
 on:
   push:
-    branches: [ "main", "master", "UserService" ]
+    branches: [ "main", "master", "OrderService" ]
   pull_request:
     branches: [ "main", "master" ]
 
@@ -14,15 +14,11 @@ jobs:
       postgres:
         image: postgres:15
         env:
-          POSTGRES_DB: userservice
+          POSTGRES_DB: order_service
           POSTGRES_USER: ${{ secrets.DB_USERNAME }}
           POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
         ports:
           - 5432:5432
-      redis:
-        image: redis:7
-        ports:
-          - 6379:6379
 
     steps:
       - uses: actions/checkout@v4
@@ -45,11 +41,9 @@ jobs:
 
       - name: Build, Test and Analyze
         env:
-          DB_URL: jdbc:postgresql://localhost:5432/userservice
+          DB_URL: jdbc:postgresql://localhost:5432/order_service
           DB_USERNAME: ${{ secrets.DB_USERNAME }}
           DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
-          REDIS_HOST: localhost
-          REDIS_PORT: 6379
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
           JWT_KEY: ${{secrets.JWT_KEY}}

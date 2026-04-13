@@ -24,6 +24,8 @@ class OrderIntegrationTest extends BaseIntegrationTest {
     private OrderRepository orderRepository;
     private Order savedOrder;
 
+    private static final long USER_ID = 2;
+
     protected UsernamePasswordAuthenticationToken getAuth(Long userId, String role) {
         return new UsernamePasswordAuthenticationToken(
                 userId, null, List.of(new SimpleGrantedAuthority("ROLE_" + role))
@@ -33,9 +35,10 @@ class OrderIntegrationTest extends BaseIntegrationTest {
     @BeforeEach
     void setUp() {
         orderRepository.deleteAll();
+        wireMockServer.resetAll();
 
         Order order = new Order();
-        order.setUserId(2L);
+        order.setUserId(USER_ID);
         order.setStatus("PENDING");
         order.setTotalPrice(new BigDecimal("200.00"));
         order.setDeleted(false);
@@ -44,32 +47,45 @@ class OrderIntegrationTest extends BaseIntegrationTest {
         savedOrder = orderRepository.save(order);
     }
 
-    @Test
-    void getOrderById_ShouldEnrichWithUserFromWireMock() throws Exception {
-        var adminAuth = getAuth(2L, "ADMIN");
-        Long userId = 2L;
-
-        UserResponseDto mockUser = new UserResponseDto();
-        mockUser.setId(userId);
-        mockUser.setName("WireMocked");
-        mockUser.setEmail("mock@test.com");
+    private void stubUserServiceSuccess(Long userId, String email) throws Exception {
+        UserResponseDto baseInfo = new UserResponseDto();
+        baseInfo.setId(userId);
+        baseInfo.setEmail(email);
 
         wireMockServer.stubFor(WireMock.get(urlEqualTo("/api/v1/users/" + userId))
                 .willReturn(aResponse()
                         .withStatus(200)
                         .withHeader("Content-Type", "application/json")
-                        .withBody(objectMapper.writeValueAsString(mockUser))));
+                        .withBody(objectMapper.writeValueAsString(baseInfo))));
 
+        UserResponseDto fullInfo = new UserResponseDto();
+        fullInfo.setId(userId);
+        fullInfo.setName("WireMocked");
+        fullInfo.setEmail(email);
+        String encodedEmail = email.replace("@", "%40");
+
+        wireMockServer.stubFor(WireMock.get(urlEqualTo("/api/v1/users/email/" + encodedEmail))
+                .willReturn(aResponse()
+                        .withStatus(200)
+                        .withHeader("Content-Type", "application/json")
+                        .withBody(objectMapper.writeValueAsString(fullInfo))));
+    }
+
+    @Test
+    void getOrderById_ShouldEnrichWithUserFromWireMock() throws Exception {
+        var adminAuth = getAuth(2L, "ADMIN");
+        Long userId = USER_ID;
+        stubUserServiceSuccess(userId, "mock@test1.com");
         mockMvc.perform(get("/api/v1/orders/" + savedOrder.getId()).with(authentication(adminAuth)))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.user.name").value("WireMocked"))
-                .andExpect(jsonPath("$.user.email").value("mock@test.com"));
+                .andExpect(jsonPath("$.user.email").value("mock@test1.com"));
     }
 
     @Test
     void getOrderById_ShouldTriggerCircuitBreakerFallback_WhenUserServiceDown() throws Exception {
         var adminAuth = getAuth(2L, "ADMIN");
-        Long userId = 2L;
+        Long userId = 5L;
 
         wireMockServer.stubFor(WireMock.get(urlEqualTo("/api/v1/users/" + userId))
                 .willReturn(aResponse().withStatus(500)));
@@ -106,15 +122,8 @@ class OrderIntegrationTest extends BaseIntegrationTest {
         var adminAuth = getAuth(1L, "ADMIN");
         String newStatus = "PAID";
 
-        UserResponseDto mockUser = new UserResponseDto();
-        mockUser.setId(2L);
-        mockUser.setName("WireMocked");
-
-        wireMockServer.stubFor(WireMock.get(urlEqualTo("/api/v1/users/2"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader("Content-Type", "application/json")
-                        .withBody(objectMapper.writeValueAsString(mockUser))));
+        Long userId = USER_ID;
+        stubUserServiceSuccess(userId, "mock@test2.com");
 
         mockMvc.perform(patch("/api/v1/orders/" + savedOrder.getId() + "/status")
                         .param("status", newStatus)
@@ -128,15 +137,8 @@ class OrderIntegrationTest extends BaseIntegrationTest {
     void getOrders_WithFiltersAndPagination_ShouldReturnCorrectPage() throws Exception {
         var adminAuth = getAuth(1L, "ADMIN");
 
-        UserResponseDto mockUser = new UserResponseDto();
-        mockUser.setId(2L);
-        mockUser.setName("WireMocked");
-
-        wireMockServer.stubFor(WireMock.get(urlEqualTo("/api/v1/users/2"))
-                .willReturn(aResponse()
-                        .withStatus(200)
-                        .withHeader("Content-Type", "application/json")
-                        .withBody(objectMapper.writeValueAsString(mockUser))));
+        Long userId = USER_ID;
+        stubUserServiceSuccess(userId, "mock@test3.com");
 
         mockMvc.perform(get("/api/v1/orders")
                         .param("statuses", "PENDING")

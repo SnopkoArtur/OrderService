@@ -51,8 +51,7 @@ public class OrderController {
     public ResponseEntity<OrderResponseDto> getOrderById(@PathVariable Long id) {
         OrderResponseDto order = orderService.getOrderById(id);
 
-        Long currentUserId = SecurityUtils.getCurrentUserId();
-        if (!SecurityUtils.hasRole("ADMIN") && !SecurityUtils.getCurrentUserId().equals(currentUserId)) {
+        if (!SecurityUtils.hasRole("ADMIN") && !SecurityUtils.getCurrentUserId().equals(order.getUser().getId())) {
             throw new AccessDeniedException("Access denied: You don't own this order");
         }
 

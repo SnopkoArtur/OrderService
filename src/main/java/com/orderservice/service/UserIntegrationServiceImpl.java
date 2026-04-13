@@ -14,9 +14,13 @@ public class UserIntegrationServiceImpl implements UserIntegrationService {
 
     private final UserClient userClient;
 
+    @Override
     @CircuitBreaker(name = "userServiceCB", fallbackMethod = "userFallback")
-    public UserResponseDto fetchUserById(Long id) {
-        return userClient.getUserById(id);
+    public UserResponseDto fetchUserByEmail(Long userId) {
+        UserResponseDto baseUser = userClient.getUserById(userId);
+        String email = baseUser.getEmail();
+
+        return userClient.getUserByEmail(email);
     }
 
     public UserResponseDto userFallback(Long id, Throwable t) {
