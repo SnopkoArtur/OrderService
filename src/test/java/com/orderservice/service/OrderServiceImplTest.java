@@ -41,6 +41,7 @@ class OrderServiceImplTest {
     private OrderResponseDto testOrderDto;
     private UserResponseDto testUserDto;
 
+    private static final String EMAIL = "mock@test.com";
     @BeforeEach
     void setUp() {
         testOrder = new Order();
@@ -48,6 +49,7 @@ class OrderServiceImplTest {
         testOrder.setUserId(100L);
         testOrder.setTotalPrice(new BigDecimal("200.00"));
         testOrder.setStatus("PENDING");
+        testOrder.setUserEmail(EMAIL);
 
         testOrderDto = new OrderResponseDto();
         testOrderDto.setId(1L);
@@ -60,19 +62,19 @@ class OrderServiceImplTest {
 
     @Test
     void createOrder_Success() {
-        Long userId = 1L;
         Item item = new Item();
         item.setId(10L);
         item.setPrice(new BigDecimal("100.00"));
 
-        OrderRequestDto request = new OrderRequestDto();
+        OrderRequestCreateDto request = new OrderRequestCreateDto();
         OrderItemRequestDto itemReq = new OrderItemRequestDto();
         itemReq.setItemId(10L);
         itemReq.setQuantity(2);
         request.setItems(List.of(itemReq));
-
+        request.setUserEmail(EMAIL);
         Order order = new Order();
         order.setId(1L);
+        order.setUserEmail(EMAIL);
 
         when(itemRepository.findById(10L)).thenReturn(Optional.of(item));
         when(orderRepository.save(any())).thenReturn(order);
@@ -80,9 +82,9 @@ class OrderServiceImplTest {
         OrderResponseDto orderResponseDto = new OrderResponseDto();
         orderResponseDto.setTotalPrice(new BigDecimal("200.00"));
         when(orderMapper.toDto(any())).thenReturn(orderResponseDto);
-        when(userIntegrationService.fetchUserByEmail(userId)).thenReturn(new UserResponseDto());
+        when(userIntegrationService.fetchUserByEmail(EMAIL)).thenReturn(new UserResponseDto());
 
-        OrderResponseDto result = orderService.createOrder(request, userId);
+        OrderResponseDto result = orderService.createOrder(request);
 
         assertNotNull(result);
         assertEquals(new BigDecimal("200.00"), result.getTotalPrice());
@@ -93,13 +95,13 @@ class OrderServiceImplTest {
     void getOrderById_Success() {
         when(orderRepository.findById(1L)).thenReturn(Optional.of(testOrder));
         when(orderMapper.toDto(testOrder)).thenReturn(testOrderDto);
-        when(userIntegrationService.fetchUserByEmail(100L)).thenReturn(testUserDto);
+        when(userIntegrationService.fetchUserByEmail(EMAIL)).thenReturn(testUserDto);
 
         OrderResponseDto result = orderService.getOrderById(1L);
 
         assertNotNull(result);
         assertEquals(1L, result.getId());
-        verify(userIntegrationService).fetchUserByEmail(100L);
+        verify(userIntegrationService).fetchUserByEmail(EMAIL);
     }
 
     @Test
@@ -116,7 +118,7 @@ class OrderServiceImplTest {
 
         when(orderRepository.findAll(any(Specification.class), eq(pageable))).thenReturn(orderPage);
         when(orderMapper.toDto(any(Order.class))).thenReturn(testOrderDto);
-        when(userIntegrationService.fetchUserByEmail(100L)).thenReturn(testUserDto);
+        when(userIntegrationService.fetchUserByEmail(EMAIL)).thenReturn(testUserDto);
 
         Page<OrderResponseDto> result = orderService.getOrders(null, null, null, pageable);
 
@@ -126,16 +128,27 @@ class OrderServiceImplTest {
     }
 
     @Test
-    void updateOrderStatus_Success() {
+    void updateOrder_Success() {
         String newStatus = "PAID";
         when(orderRepository.findById(1L)).thenReturn(Optional.of(testOrder));
         when(orderMapper.toDto(testOrder)).thenReturn(testOrderDto);
-        when(userIntegrationService.fetchUserByEmail(100L)).thenReturn(testUserDto);
+        when(userIntegrationService.fetchUserByEmail(EMAIL)).thenReturn(testUserDto);
 
-        OrderResponseDto result = orderService.updateOrderStatus(1L, newStatus);
+        OrderRequestUpdateDto request = new OrderRequestUpdateDto();
+        OrderItemRequestDto itemReq = new OrderItemRequestDto();
+        itemReq.setItemId(1L);
+        itemReq.setQuantity(3);
+        request.setItems(List.of(itemReq));
+        request.setStatus(newStatus);
+        Item item = new Item();
+        item.setId(1L);
+        item.setPrice(new BigDecimal("11.00"));
+        when(itemRepository.findById(1L)).thenReturn(Optional.of(item));
+        when(orderRepository.save(any())).thenReturn(testOrder);
+        OrderResponseDto result = orderService.updateOrder(1L, request);
 
         assertNotNull(result);
-        assertEquals("PAID", testOrder.getStatus());
+        assertEquals(newStatus, testOrder.getStatus());
         verify(orderMapper).toDto(testOrder);
     }
 
@@ -161,7 +174,7 @@ class OrderServiceImplTest {
         Long userId = 1L;
         when(orderRepository.findAllByUserId(userId)).thenReturn(List.of(testOrder));
         when(orderMapper.toDto(testOrder)).thenReturn(testOrderDto);
-        when(userIntegrationService.fetchUserByEmail(userId)).thenReturn(testUserDto);
+        when(userIntegrationService.fetchUserByEmail(EMAIL)).thenReturn(testUserDto);
 
         List<OrderResponseDto> result = orderService.getOrdersByUserId(userId);
 

@@ -16,17 +16,14 @@ public class UserIntegrationServiceImpl implements UserIntegrationService {
 
     @Override
     @CircuitBreaker(name = "userServiceCB", fallbackMethod = "userFallback")
-    public UserResponseDto fetchUserByEmail(Long userId) {
-        UserResponseDto baseUser = userClient.getUserById(userId);
-        String email = baseUser.getEmail();
-
+    public UserResponseDto fetchUserByEmail(String email) {
         return userClient.getUserByEmail(email);
     }
 
-    public UserResponseDto userFallback(Long id, Throwable t) {
-        log.error("Circuit Breaker triggered for User ID {}! Reason: {}", id, t.getMessage());
+    public UserResponseDto userFallback(String email, Throwable t) {
+        log.error("Circuit Breaker triggered for User ID {}! Reason: {}", email, t.getMessage());
         UserResponseDto fallback = new UserResponseDto();
-        fallback.setId(id);
+        fallback.setId(0L);
         fallback.setName("Service Unavailable");
         fallback.setSurname("N/A");
         fallback.setEmail("N/A");

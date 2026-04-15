@@ -1,6 +1,7 @@
 package com.orderservice.service;
 
-import com.orderservice.dto.OrderRequestDto;
+import com.orderservice.dto.OrderRequestCreateDto;
+import com.orderservice.dto.OrderRequestUpdateDto;
 import com.orderservice.dto.OrderResponseDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -17,10 +18,9 @@ public interface OrderService {
      * Creates new order
      *
      * @param requestDto    request data, including all ordered items
-     * @param currentUserId user id
      * @return created order
      */
-    OrderResponseDto createOrder(OrderRequestDto requestDto, Long currentUserId);
+    OrderResponseDto createOrder(OrderRequestCreateDto requestDto);
 
     /**
      * Provides full info about order using id
@@ -50,13 +50,13 @@ public interface OrderService {
     List<OrderResponseDto> getOrdersByUserId(Long userId);
 
     /**
-     * Updates order status
+     * Updates order
      *
      * @param id     order id
-     * @param status new status string
+     * @param requestDto new order data
      * @return updates order
      */
-    OrderResponseDto updateOrderStatus(Long id, String status);
+    OrderResponseDto updateOrder(Long id, OrderRequestUpdateDto requestDto);
 
     /**
      * Performs soft delete

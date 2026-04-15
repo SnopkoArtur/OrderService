@@ -24,8 +24,6 @@ public class OrderSpecifications {
                 predicates.add(root.get("status").in(statuses));
             }
 
-            predicates.add(cb.equal(root.get("deleted"), false));
-
             return cb.and(predicates.toArray(new Predicate[0]));
         };
     }

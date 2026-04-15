@@ -1,6 +1,7 @@
 package com.orderservice.controller;
 
-import com.orderservice.dto.OrderRequestDto;
+import com.orderservice.dto.OrderRequestCreateDto;
+import com.orderservice.dto.OrderRequestUpdateDto;
 import com.orderservice.dto.OrderResponseDto;
 import com.orderservice.service.OrderService;
 import com.orderservice.utils.SecurityUtils;
@@ -35,10 +36,10 @@ public class OrderController {
      * @param requestDto order info
      * @return created order
      */
+    @PreAuthorize("hasRole('ADMIN')")
     @PostMapping
-    public ResponseEntity<OrderResponseDto> createOrder(@Valid @RequestBody OrderRequestDto requestDto) {
-        Long currentUserId = SecurityUtils.getCurrentUserId();
-        return new ResponseEntity<>(orderService.createOrder(requestDto, currentUserId), HttpStatus.CREATED);
+    public ResponseEntity<OrderResponseDto> createOrder(@Valid @RequestBody OrderRequestCreateDto requestDto) {
+        return new ResponseEntity<>(orderService.createOrder(requestDto), HttpStatus.CREATED);
     }
 
     /**
@@ -90,16 +91,16 @@ public class OrderController {
     }
 
     /**
-     * Updates status id
+     * Updates order with given id
      *
      * @param id     order id
-     * @param status new status string
+     * @param requestDto new order data
      * @return updated order
      */
-    @PatchMapping("/{id}/status")
+    @PutMapping("/{id}")
     @PreAuthorize("hasRole('ADMIN')")
-    public ResponseEntity<OrderResponseDto> updateOrderStatus(@PathVariable Long id, @RequestParam String status) {
-        return ResponseEntity.ok(orderService.updateOrderStatus(id, status));
+    public ResponseEntity<OrderResponseDto> updateOrder(@PathVariable Long id, @Valid  @RequestBody OrderRequestUpdateDto requestDto) {
+        return ResponseEntity.ok(orderService.updateOrder(id, requestDto));
     }
 
     /**

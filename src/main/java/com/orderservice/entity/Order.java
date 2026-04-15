@@ -30,6 +30,10 @@ public class Order extends BaseEntity {
 
     private boolean deleted;
 
-    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
+    @Column(name = "user_email", nullable = false)
+    private String userEmail;
+
+    @OneToMany(mappedBy = "order", cascade = CascadeType.ALL, orphanRemoval = true)
+    @SQLRestriction("deleted = false")
     private List<OrderItem> orderItems = new ArrayList<>();
 }

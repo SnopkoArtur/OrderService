@@ -3,8 +3,7 @@ package com.orderservice.service;
 import com.orderservice.client.UserClient;
 import com.orderservice.dao.ItemRepository;
 import com.orderservice.dao.OrderRepository;
-import com.orderservice.dto.OrderResponseDto;
-import com.orderservice.dto.OrderRequestDto;
+import com.orderservice.dto.*;
 import com.orderservice.entity.Order;
 import com.orderservice.entity.OrderItem;
 import com.orderservice.exception.ResourceNotFoundException;
@@ -20,7 +19,6 @@ import org.springframework.data.domain.Pageable;
 
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
 import java.util.List;
 
 @Slf4j
@@ -37,16 +35,68 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     @Transactional
-    public OrderResponseDto createOrder(OrderRequestDto requestDto, Long currentUserId) {
+    public OrderResponseDto createOrder(OrderRequestCreateDto requestDto) {
+        UserResponseDto userFullInfo = userIntegrationService.fetchUserByEmail(requestDto.getUserEmail());
+
         Order order = new Order();
-        order.setUserId(currentUserId);
+        order.setUserId(userFullInfo.getId());
         order.setStatus("PENDING");
         order.setDeleted(false);
+        order.setUserEmail(requestDto.getUserEmail());
 
+        calculateTotalAndSetItems(requestDto.getItems(), order);
+
+        Order savedOrder = orderRepository.save(order);
+        OrderResponseDto response = orderMapper.toDto(savedOrder);
+        response.setUser(userFullInfo);
+        return response;
+    }
+
+    @Override
+    public OrderResponseDto getOrderById(Long id) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found: " + id));
+
+        return enrichWithUserInfo(orderMapper.toDto(order), order.getUserEmail());
+    }
+
+    @Override
+    public Page<OrderResponseDto> getOrders(LocalDateTime from, LocalDateTime to, List<String> statuses, Pageable pageable) {
+        return orderRepository.findAll(OrderSpecifications.getFilter(from, to, statuses), pageable)
+                .map(order -> enrichWithUserInfo(orderMapper.toDto(order), order.getUserEmail()));
+    }
+
+    @Override
+    @Transactional
+    public OrderResponseDto updateOrder(Long id, OrderRequestUpdateDto orderRequestDto) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
+
+        order.getOrderItems().clear();
+        order.setStatus(orderRequestDto.getStatus());
+        UserResponseDto userFullInfo = null;
+
+        if (orderRequestDto.getUserEmail() != null && !order.getUserEmail().equals(orderRequestDto.getUserEmail())){
+            userFullInfo = userIntegrationService.fetchUserByEmail(orderRequestDto.getUserEmail());
+            order.setUserId(userFullInfo.getId());
+            order.setUserEmail(orderRequestDto.getUserEmail());
+        }
+
+        calculateTotalAndSetItems(orderRequestDto.getItems(), order);
+        Order savedOrder = orderRepository.save(order);
+        if (userFullInfo != null){
+            OrderResponseDto response = orderMapper.toDto(savedOrder);
+            response.setUser(userFullInfo);
+            return response;
+        }
+        return enrichWithUserInfo(orderMapper.toDto(savedOrder), order.getUserEmail());
+    }
+
+    private void calculateTotalAndSetItems(List<OrderItemRequestDto> items, Order order) {
         BigDecimal total = BigDecimal.ZERO;
-        List<OrderItem> orderItems = new ArrayList<>();
+        List<OrderItem> orderItems = order.getOrderItems();
 
-        for (var itemReq : requestDto.getItems()) {
+        for (var itemReq : items) {
             Item item = itemRepository.findById(itemReq.getItemId())
                     .orElseThrow(() -> new ResourceNotFoundException("Item not found: " + itemReq.getItemId()));
 
@@ -60,35 +110,7 @@ public class OrderServiceImpl implements OrderService {
             total = total.add(lineTotal);
         }
 
-        order.setOrderItems(orderItems);
         order.setTotalPrice(total);
-
-        Order savedOrder = orderRepository.save(order);
-        return enrichWithUserInfo(orderMapper.toDto(savedOrder), currentUserId);
-    }
-
-    @Override
-    public OrderResponseDto getOrderById(Long id) {
-        Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Order not found: " + id));
-
-        return enrichWithUserInfo(orderMapper.toDto(order), order.getUserId());
-    }
-
-    @Override
-    public Page<OrderResponseDto> getOrders(LocalDateTime from, LocalDateTime to, List<String> statuses, Pageable pageable) {
-        return orderRepository.findAll(OrderSpecifications.getFilter(from, to, statuses), pageable)
-                .map(order -> enrichWithUserInfo(orderMapper.toDto(order), order.getUserId()));
-    }
-
-    @Override
-    @Transactional
-    public OrderResponseDto updateOrderStatus(Long id, String status) {
-        Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Order not found"));
-
-        order.setStatus(status);
-        return enrichWithUserInfo(orderMapper.toDto(order), order.getUserId());
     }
 
     @Override
@@ -102,13 +124,22 @@ public class OrderServiceImpl implements OrderService {
 
     @Override
     public List<OrderResponseDto> getOrdersByUserId(Long userId) {
-        return orderRepository.findAllByUserId(userId).stream()
-                .map(order -> enrichWithUserInfo(orderMapper.toDto(order), userId))
+        List<Order> orders = orderRepository.findAllByUserId(userId);
+        if (orders.isEmpty()) return List.of();
+
+        UserResponseDto userDto = userIntegrationService.fetchUserByEmail(orders.get(0).getUserEmail());
+
+        return orders.stream()
+                .map(order -> {
+                    OrderResponseDto dto = orderMapper.toDto(order);
+                    dto.setUser(userDto);
+                    return dto;
+                })
                 .toList();
     }
 
-    private OrderResponseDto enrichWithUserInfo(OrderResponseDto dto, Long userId) {
-        dto.setUser(userIntegrationService.fetchUserByEmail(userId));
+    private OrderResponseDto enrichWithUserInfo(OrderResponseDto dto, String email) {
+        dto.setUser(userIntegrationService.fetchUserByEmail(email));
         return dto;
     }
 }

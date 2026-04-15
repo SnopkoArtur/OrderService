@@ -9,8 +9,8 @@ public interface UserIntegrationService {
     /**
      * Gets user info from remote service
      *
-     * @param id user id using which email and then user data acquired
+     * @param email user email using which  user data acquired
      * @return user data or filled temporal data
      */
-    UserResponseDto fetchUserByEmail(Long id);
+    UserResponseDto fetchUserByEmail(String email);
 }

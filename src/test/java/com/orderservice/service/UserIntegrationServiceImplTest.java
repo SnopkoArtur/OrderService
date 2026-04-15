@@ -39,30 +39,25 @@ class UserIntegrationServiceImplTest {
 
     @Test
     void fetchUserByEmail_Success() {
-        Long userId = 1L;
         String email = "test@example.com";
 
-        when(userClient.getUserById(userId)).thenReturn(baseUser);
         when(userClient.getUserByEmail(email)).thenReturn(fullUser);
 
-        UserResponseDto result = userIntegrationService.fetchUserByEmail(userId);
+        UserResponseDto result = userIntegrationService.fetchUserByEmail(email);
 
         assertNotNull(result);
         assertEquals("Ivan", result.getName());
         assertEquals(email, result.getEmail());
 
-        verify(userClient).getUserById(userId);
         verify(userClient).getUserByEmail(email);
     }
 
     @Test
     void userFallback_ShouldReturnPlaceholderDto() {
-        Long userId = 1L;
         Throwable exception = new RuntimeException("Connection failed");
 
-        UserResponseDto result = userIntegrationService.userFallback(userId, exception);
+        UserResponseDto result = userIntegrationService.userFallback("someemail@email.test", exception);
         assertNotNull(result);
-        assertEquals(userId, result.getId());
         assertEquals("Service Unavailable", result.getName());
         assertEquals("N/A", result.getSurname());
         assertEquals("N/A", result.getEmail());

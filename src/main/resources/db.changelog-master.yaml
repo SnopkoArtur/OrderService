@@ -187,3 +187,31 @@ databaseChangeLog:
               - column: { name: price, valueNumeric: 799.00 }
               - column: { name: created_at, valueDate: "now()" }
               - column: { name: updated_at, valueDate: "now()" }
+
+  - changeSet:
+      id: 03042026-order-softdelete-orderitem
+      author: user
+      changes:
+        - addColumn:
+            tableName: order_items
+            columns:
+              - column:
+                  name: deleted
+                  type: boolean
+                  defaultValueBoolean: false
+                  constraints:
+                    nullable: false
+
+  - changeSet:
+      id: 03042026-orders-add-email
+      author: user
+      changes:
+        - addColumn:
+            tableName: orders
+            columns:
+              - column:
+                  name: user_email
+                  type: varchar(255)
+                  defaultValue: "example@example.com"
+                  constraints:
+                    nullable: false

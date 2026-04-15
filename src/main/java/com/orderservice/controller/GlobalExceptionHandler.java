@@ -2,6 +2,7 @@ package com.orderservice.controller;
 
 import com.orderservice.exception.ResourceNotFoundException;
 import com.orderservice.dto.ErrorResponseDto;
+import feign.FeignException;
 import io.jsonwebtoken.ExpiredJwtException;
 import io.jsonwebtoken.MalformedJwtException;
 import io.jsonwebtoken.UnsupportedJwtException;
@@ -60,6 +61,18 @@ public class GlobalExceptionHandler {
     public ResponseEntity<ErrorResponseDto> handleAuthException(AuthenticationException ex, HttpServletRequest request) {
         log.error("Authentication error occurred: ", ex);
         return buildResponse(HttpStatus.UNAUTHORIZED, "Full authentication is required", request, null);
+    }
+
+    @ExceptionHandler(FeignException.NotFound.class)
+    public ResponseEntity<ErrorResponseDto> handleFeignNotFoundException(FeignException.NotFound ex, HttpServletRequest request) {
+        log.error("External service 404 error: {}", ex.getMessage());
+
+        return buildResponse(
+                HttpStatus.NOT_FOUND,
+                "User with provided email not found in User Service",
+                request,
+                null
+        );
     }
 
     @ExceptionHandler({

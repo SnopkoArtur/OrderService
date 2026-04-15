@@ -1,7 +1,8 @@
 package com.orderservice.mapper;
 
 import com.orderservice.dto.OrderItemResponseDto;
-import com.orderservice.dto.OrderRequestDto;
+import com.orderservice.dto.OrderRequestCreateDto;
+import com.orderservice.dto.OrderRequestUpdateDto;
 import com.orderservice.dto.OrderResponseDto;
 import com.orderservice.entity.Order;
 import com.orderservice.entity.OrderItem;
@@ -22,5 +23,13 @@ public interface OrderMapper {
 
     @Mapping(target = "id", ignore = true)
     @Mapping(target = "orderItems", ignore = true)
-    Order toEntity(OrderRequestDto dto);
+    @Mapping(target = "status", constant = "PENDING")
+    @Mapping(target = "deleted", constant = "false")
+    Order toEntity(OrderRequestCreateDto dto);
+
+    @Mapping(target = "id", ignore = true)
+    @Mapping(target = "orderItems", ignore = true)
+    @Mapping(target = "deleted", ignore = true)
+    Order toEntity(OrderRequestUpdateDto dto);
+
 }
