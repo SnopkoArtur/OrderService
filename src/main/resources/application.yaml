@@ -1,0 +1,22 @@
+server:
+  port: ${SERVER_PORT}
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  liquibase:
+    change-log: classpath:db.changelog-master.yaml
+
+jwt:
+  key: ${JWT_KEY}
+resilience4j:
+  circuitbreaker:
+    instances:
+      userServiceCB:
+        ignoreExceptions:
+          - feign.FeignException.Forbidden
+          - feign.FeignException.Unauthorized
+user-service:
+  url: ${USER_SERVICE_URL}
+
