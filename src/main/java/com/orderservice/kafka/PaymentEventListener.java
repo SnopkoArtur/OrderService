@@ -15,8 +15,6 @@ public class PaymentEventListener {
 
     @KafkaListener(topics = "payment-events", groupId = "order-service-group")
     public void handlePaymentEvent(PaymentEventDto event) {
-        log.info("Received payment event for order ID: {} with status: {}", event.getOrderId(), event.getStatus());
-
         String newOrderStatus = event.getStatus().equals("SUCCESS") ? "PAID" : "PAYMENT_FAILED";
 
         orderService.updateOrderStatus(event.getOrderId(), newOrderStatus);
