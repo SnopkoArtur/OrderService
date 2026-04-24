@@ -7,7 +7,17 @@ spring:
     password: ${DB_PASSWORD}
   liquibase:
     change-log: classpath:db.changelog-master.yaml
-
+  kafka:
+    bootstrap-servers: ${KAFKA_URL}
+    consumer:
+      group-id: order-service-group
+      key-deserializer: org.apache.kafka.common.serialization.StringDeserializer
+      value-deserializer: org.springframework.kafka.support.serializer.JsonDeserializer
+      properties:
+        spring.json.trusted.packages: "*"
+        spring.deserializer.value.delegate.class: org.springframework.kafka.support.serializer.JsonDeserializer
+        spring.json.value.default.type: com.orderservice.dto.PaymentEventDto
+        spring.json.use.type.headers: false
 jwt:
   key: ${JWT_KEY}
 resilience4j:

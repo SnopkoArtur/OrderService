@@ -142,4 +142,13 @@ public class OrderServiceImpl implements OrderService {
         dto.setUser(userIntegrationService.fetchUserByEmail(email));
         return dto;
     }
+
+    @Override
+    @Transactional
+    public void updateOrderStatus(Long id, String status) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Order not found: " + id));
+        order.setStatus(status);
+        orderRepository.save(order);
+    }
 }
