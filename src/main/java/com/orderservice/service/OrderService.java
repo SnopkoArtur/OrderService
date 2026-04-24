@@ -64,4 +64,13 @@ public interface OrderService {
      * @param id order id
      */
     void deleteOrder(Long id);
+
+    /**
+     * Updates only status
+     * Used for kafka in case of payment update
+     *
+     * @param id     order id
+     * @param status new status
+     */
+    void updateOrderStatus(Long id, String status);
 }
