@@ -30,3 +30,18 @@ resilience4j:
 user-service:
   url: ${USER_SERVICE_URL}
 
+management:
+  endpoint:
+    health:
+      probes:
+        enabled: true
+      show-details: always
+      group:
+        readiness:
+          include: readinessState, db
+        liveness:
+          include: livenessState
+  endpoints:
+    web:
+      exposure:
+        include: health
