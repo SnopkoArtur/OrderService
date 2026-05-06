@@ -127,6 +127,16 @@ class OrderServiceImplTest {
         verify(orderRepository).findAll(any(Specification.class), eq(pageable));
     }
 
+
+    @Test
+    void updateOrderStatus_Success() {
+        when(orderRepository.findById(111L)).thenReturn(Optional.of(testOrder));
+        String newStatus = "PAID";
+        orderService.updateOrderStatus(111L, newStatus);
+
+        assertEquals("PAID", testOrder.getStatus());
+    }
+
     @Test
     void updateOrder_Success() {
         String newStatus = "PAID";
