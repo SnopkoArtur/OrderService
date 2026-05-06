@@ -25,7 +25,7 @@ class PaymentEventListenerTest {
         PaymentEventDto event = new PaymentEventDto();
         event.setOrderId(100L);
         event.setStatus("SUCCESS");
-
+        event.setEventType("CREATE_PAYMENT");
         paymentEventListener.handlePaymentEvent(event);
 
         verify(orderService, times(1)).updateOrderStatus(100L, "PAID");
@@ -36,7 +36,7 @@ class PaymentEventListenerTest {
         PaymentEventDto event = new PaymentEventDto();
         event.setOrderId(101L);
         event.setStatus("FAILED");
-
+        event.setEventType("CREATE_PAYMENT");
         paymentEventListener.handlePaymentEvent(event);
 
         verify(orderService, times(1)).updateOrderStatus(101L, "PAYMENT_FAILED");
